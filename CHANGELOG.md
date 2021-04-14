@@ -1,3 +1,8 @@
+# Gunpowder Market 1.0.3
+
+- Remove debug code that caused issues.
+
+---
 # Gunpowder Market 1.0.2
 
 - Basically fix everything
