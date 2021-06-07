@@ -32,19 +32,19 @@ import io.github.gunpowder.api.GunpowderMod
 import io.github.gunpowder.api.builders.ChestGui
 import io.github.gunpowder.api.builders.Command
 import io.github.gunpowder.api.builders.SidebarInfo
-import io.github.gunpowder.api.module.currency.modelhandlers.BalanceHandler
-import io.github.gunpowder.api.module.market.dataholders.StoredMarketEntry
-import io.github.gunpowder.api.module.market.modelhandlers.MarketEntryHandler
 import io.github.gunpowder.api.util.TranslatedText
 import io.github.gunpowder.configs.MarketConfig
+import io.github.gunpowder.entities.StoredMarketEntry
+import io.github.gunpowder.modelhandlers.BalanceHandler
+import io.github.gunpowder.modelhandlers.MarketEntryHandler
 import net.fabricmc.fabric.api.util.NbtType
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
-import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.StringTag
-import net.minecraft.nbt.Tag
+import net.minecraft.nbt.NbtElement
+import net.minecraft.nbt.NbtList
+import net.minecraft.nbt.NbtString
 import net.minecraft.screen.NamedScreenHandlerFactory
 import net.minecraft.screen.ScreenHandler
 import net.minecraft.server.command.ServerCommandSource
@@ -60,10 +60,10 @@ import kotlin.concurrent.thread
 
 object MarketCommand {
     private val marketHandler by lazy {
-        GunpowderMod.instance.registry.getModelHandler(MarketEntryHandler::class.java)
+        MarketEntryHandler
     }
     private val balanceHandler by lazy {
-        GunpowderMod.instance.registry.getModelHandler(BalanceHandler::class.java)
+        BalanceHandler
     }
 
     private val EMPTY: ItemStack
@@ -105,7 +105,7 @@ object MarketCommand {
             val item = entry.item
             val tag = item.tag!!
             val display = tag.getCompound("display")
-            val lore = display.getList("Lore", NbtType.STRING) as ListTag
+            val lore = display.getList("Lore", NbtType.STRING) as NbtList
 
             lore.removeAt(3)
             lore.removeAt(2)
@@ -215,16 +215,16 @@ object MarketCommand {
                 val lore = display.getList("Lore", NbtType.STRING)
 
                 // Remove existing lore
-                val oldTags = mutableListOf<Tag>()
+                val oldTags = mutableListOf<NbtElement>()
                 for (x in 3 downTo 0) {
                     oldTags.add(lore.removeAt(x))
                 }
-                val newLore = ListTag()
+                val newLore = NbtList()
                 oldTags.reverse()
                 oldTags.removeLast()
                 newLore.addAll(oldTags)
                 newLore.add(
-                    StringTag.of("[{\"text\":\"Expires in: \",\"color\":\"white\",\"italic\":false},{\"text\":\"$timeString\",\"color\":\"gray\",\"italic\":false}]")
+                    NbtString.of("[{\"text\":\"Expires in: \",\"color\":\"white\",\"italic\":false},{\"text\":\"$timeString\",\"color\":\"gray\",\"italic\":false}]")
                 )
                 for (i in 0 until lore.lastIndex) {
                     newLore.add(lore[i])
@@ -295,7 +295,7 @@ object MarketCommand {
             player.sendMessage(LiteralText("Not enough money!"), false)
         } else {
             // Check if still present
-            if (marketHandler.getEntries().contains(entry)) {
+            if (marketHandler.getEntries().any { it.expire == entry.expire }) {
                 marketHandler.deleteEntry(entry)
                 balanceHandler.modifyUser(player.uuid) {
                     it.balance -= entry.price
@@ -312,7 +312,7 @@ object MarketCommand {
                 val amount = item.count
                 val tag = item.tag!!
                 val display = tag.getCompound("display")
-                val lore = display.getList("Lore", NbtType.STRING) as ListTag
+                val lore = display.getList("Lore", NbtType.STRING) as NbtList
 
                 lore.removeAt(3)
                 lore.removeAt(2)
@@ -351,16 +351,11 @@ object MarketCommand {
                     line("One of your items was sold!")
                     line("")
 
-                    // TODO: Change this when updating to Gunpowder Core 0.3.3
-                    line("Item: ${amount}x ${TranslatedText(tkey).translate("en_us")}", Formatting.GREEN)
+                    line("Item: ${amount}x ${TranslatedText(tkey).translateForPlayer(p)}", Formatting.GREEN)
                     line("Price: ${entry.price}", Formatting.BLUE)
                 }(p)
 
-                thread(start = true) {
-                    Thread.sleep(5000)
-                    sidebar.remove()
-                }
-
+                sidebar.removeAfter(5)
 
             } else {
                 player.sendMessage(LiteralText("Item no longer available"), false)

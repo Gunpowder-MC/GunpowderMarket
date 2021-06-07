@@ -28,10 +28,7 @@ import io.github.gunpowder.api.GunpowderMod
 import io.github.gunpowder.api.GunpowderModule
 import io.github.gunpowder.commands.MarketCommand
 import io.github.gunpowder.configs.MarketConfig
-import io.github.gunpowder.modelhandlers.MarketEntryHandler
 import io.github.gunpowder.models.MarketEntryTable
-import java.util.function.Supplier
-import io.github.gunpowder.api.module.market.modelhandlers.MarketEntryHandler as APIMarketEntryHandler
 
 class GunpowderMarketModule : GunpowderModule {
     override val name = "market"
@@ -46,9 +43,8 @@ class GunpowderMarketModule : GunpowderModule {
         gunpowder.registry.registerConfig("gunpowder-market.yaml", MarketConfig::class.java, "gunpowder-market.yaml")
     }
 
-    override fun onInitialize() {
+    override fun registerTables() {
         gunpowder.registry.registerTable(MarketEntryTable)
-        gunpowder.registry.registerModelHandler(APIMarketEntryHandler::class.java) { MarketEntryHandler }
     }
 
 }

@@ -25,90 +25,63 @@
 package io.github.gunpowder.modelhandlers
 
 import io.github.gunpowder.api.GunpowderMod
-import io.github.gunpowder.api.module.market.dataholders.StoredMarketEntry
-import io.github.gunpowder.loadItemStack
+import io.github.gunpowder.entities.StoredMarketEntry
 import io.github.gunpowder.models.MarketEntryTable
-import io.github.gunpowder.saveItemStack
-import net.minecraft.item.ItemStack
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.NbtIo
-import net.minecraft.nbt.StringTag
+import net.minecraft.nbt.NbtCompound
+import net.minecraft.nbt.NbtList
+import net.minecraft.nbt.NbtString
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.statements.api.ExposedBlob
-import java.io.ByteArrayOutputStream
 import java.time.Duration
 import java.time.LocalDateTime
-import io.github.gunpowder.api.module.market.modelhandlers.MarketEntryHandler as APIMarketEntryHandler
 
-object MarketEntryHandler : APIMarketEntryHandler {
+object MarketEntryHandler {
     private val db by lazy {
         GunpowderMod.instance.database
     }
-    private val cache = mutableListOf<StoredMarketEntry>()
 
-    init {
-        loadEntries()
-    }
-
-    private fun loadEntries() {
-        val items = db.transaction {
-            val results = MarketEntryTable.selectAll()
-
-            if (results.empty()) {
-                return@transaction listOf<StoredMarketEntry>()
-            }
-
-            return@transaction results.map {
-                StoredMarketEntry(
-                        it[MarketEntryTable.user],
-                        loadItemStack(it[MarketEntryTable.item]),
-                        it[MarketEntryTable.price],
-                        it[MarketEntryTable.expiresAt]
-                )
-            }.toList()
-        }.get()
-        cache.addAll(items)
-    }
-
-    override fun createEntry(e: StoredMarketEntry) {
-        cache.add(e)
+    fun createEntry(e: StoredMarketEntry) {
         db.transaction {
             MarketEntryTable.insert {
                 it[user] = e.uuid
-                it[item] = saveItemStack(e.item)
+                it[item] = e.item
                 it[price] = e.price
                 it[expiresAt] = e.expire
             }
         }
     }
 
-    override fun getEntries(): List<StoredMarketEntry> {
-        return cache.toList().sortedBy { it.expire }.also {
-            it.forEach { entry ->
+    fun getEntries(): List<StoredMarketEntry> {
+        return db.transaction {
+            MarketEntryTable.selectAll().map {
+                val entry = StoredMarketEntry(
+                    it[MarketEntryTable.user],
+                    it[MarketEntryTable.item],
+                    it[MarketEntryTable.price],
+                    it[MarketEntryTable.expiresAt]
+                )
                 val seller = GunpowderMod.instance.server.userCache.getByUuid(entry.uuid)?.name ?: "DummySeller"
                 val timeLeft = Duration.between(LocalDateTime.now(), entry.expire)
                 val timeString = "${timeLeft.toDays()}d ${timeLeft.toHours() % 24}h " +
                         "${timeLeft.toMinutes() % 60}m ${timeLeft.seconds % 60}s"
 
                 // Add Lore
-                val tag = entry.item.tag ?: CompoundTag()
-                val display = tag.get("display") as CompoundTag? ?: CompoundTag()
-                val lore = tag.get("Lore") as ListTag? ?: ListTag()
-                val newLore = ListTag()
+                val tag = entry.item.tag ?: NbtCompound()
+                val display = tag.get("display") as NbtCompound? ?: NbtCompound()
+                val lore = tag.get("Lore") as NbtList? ?: NbtList()
+                val newLore = NbtList()
 
                 newLore.addAll(
                         // Add our stuff
                         listOf(
-                                StringTag.of("[{\"text\":\"\"}]"),  // Blank line
+                                NbtString.of("[{\"text\":\"\"}]"),  // Blank line
                                 // Seller
-                                StringTag.of("[{\"text\":\"Seller: \",\"color\":\"white\",\"italic\":false},{\"text\":\"$seller\",\"color\":\"green\",\"italic\":false}]"),
+                            NbtString.of("[{\"text\":\"Seller: \",\"color\":\"white\",\"italic\":false},{\"text\":\"$seller\",\"color\":\"green\",\"italic\":false}]"),
                                 // Price
-                                StringTag.of("[{\"text\":\"Price: \",\"color\":\"white\",\"italic\":false},{\"text\":\"$${entry.price}\",\"color\":\"gold\",\"italic\":false}]"),
+                            NbtString.of("[{\"text\":\"Price: \",\"color\":\"white\",\"italic\":false},{\"text\":\"$${entry.price}\",\"color\":\"gold\",\"italic\":false}]"),
                                 // Expire time
-                                StringTag.of("[{\"text\":\"Expires in: \",\"color\":\"white\",\"italic\":false},{\"text\":\"$timeString\",\"color\":\"gray\",\"italic\":false}]")
+                            NbtString.of("[{\"text\":\"Expires in: \",\"color\":\"white\",\"italic\":false},{\"text\":\"$timeString\",\"color\":\"gray\",\"italic\":false}]")
                         )
                 )
 
@@ -120,13 +93,12 @@ object MarketEntryHandler : APIMarketEntryHandler {
                 display.put("Lore", newLore)
                 tag.put("display", display)
                 entry.item.tag = tag
+                entry
             }
-        }
+        }.get()
     }
 
-    // TODO: Delete expired entries and return items to owner somehow
-    override fun deleteEntry(e: StoredMarketEntry) {
-        cache.remove(e)
+    fun deleteEntry(e: StoredMarketEntry) {
         db.transaction {
             MarketEntryTable.deleteWhere {
                 MarketEntryTable.expiresAt.eq(e.expire)

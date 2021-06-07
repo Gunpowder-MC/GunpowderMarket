@@ -14,7 +14,7 @@ buildscript {
 
 // Plugins
 plugins {
-    id 'io.github.gunpowder' version '0.1.9'
+    id 'io.github.gunpowder' version '0.2.5.1'
 }
 
 
@@ -28,5 +28,5 @@ dependencies {
             }
         }
     }
-    modImplementation "io.github.gunpowder:gunpowder-currency:1.0.2+gunpowder.0.3.1.mc.1.16.4"
+    modImplementation "io.github.gunpowder:gunpowder-currency:1.0.4+gunpowder.1.0.0.mc.1.17-rc2"
 }

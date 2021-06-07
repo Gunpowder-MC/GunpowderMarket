@@ -24,12 +24,14 @@
 
 package io.github.gunpowder.models
 
+import io.github.gunpowder.api.exposed.PlayerTable
+import io.github.gunpowder.api.exposed.itemStack
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.`java-time`.datetime
 
 object MarketEntryTable : Table() {
-    val user = uuid("user")
-    val item = blob("itemstack")
+    val user = uuid("user") references PlayerTable.id
+    val item = itemStack("itemstack")
     val price = decimal("price", 64, 2)
     val expiresAt = datetime("expires")
     override val primaryKey = PrimaryKey(user, expiresAt)
