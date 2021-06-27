@@ -1,5 +1,11 @@
 # Gunpowder Market 1.0.4
 
+- Permissions
+
+---
+
+# Gunpowder Market 1.0.4
+
 - Update to 1.17
 - Remove caching
 - Use proper column types

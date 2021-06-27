@@ -28,6 +28,7 @@ import io.github.gunpowder.api.GunpowderMod
 import io.github.gunpowder.api.GunpowderModule
 import io.github.gunpowder.commands.MarketCommand
 import io.github.gunpowder.configs.MarketConfig
+import io.github.gunpowder.events.PermissionRegisterCallback
 import io.github.gunpowder.models.MarketEntryTable
 
 class GunpowderMarketModule : GunpowderModule {
@@ -37,6 +38,9 @@ class GunpowderMarketModule : GunpowderModule {
 
     override fun registerCommands() {
         gunpowder.registry.registerCommand(MarketCommand::register)
+
+        PermissionRegisterCallback.EVENT.invoker().trigger("market.buy")
+        PermissionRegisterCallback.EVENT.invoker().trigger("market.limit.[int]")
     }
 
     override fun registerConfigs() {

@@ -1,4 +1,5 @@
 # Gunpowder Market Config
 
 # Maximum number of entries a user can have at once
+# This can be overridden with permissions
 maxMarketsPerUser: 10

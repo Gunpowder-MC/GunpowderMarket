@@ -32,6 +32,8 @@ import io.github.gunpowder.api.GunpowderMod
 import io.github.gunpowder.api.builders.ChestGui
 import io.github.gunpowder.api.builders.Command
 import io.github.gunpowder.api.builders.SidebarInfo
+import io.github.gunpowder.api.ext.getPermission
+import io.github.gunpowder.api.ext.getPresentPermission
 import io.github.gunpowder.api.util.TranslatedText
 import io.github.gunpowder.configs.MarketConfig
 import io.github.gunpowder.entities.StoredMarketEntry
@@ -75,9 +77,12 @@ object MarketCommand {
     fun register(dispatcher: CommandDispatcher<ServerCommandSource>) {
         Command.builder(dispatcher) {
             command("market", "m") {
+                permission("market.view", 0)
+
                 executes(MarketCommand::viewMarket)
 
                 literal("add", "a") {
+                    permission("market.add", 0)
                     argument("price", DoubleArgumentType.doubleArg(0.0)) {
                         executes(::addMarketOne)
 
@@ -88,6 +93,7 @@ object MarketCommand {
                 }
 
                 literal("expired") {
+                    permission("market.add", 0)
                     executes(::collectMarketExpired)
                 }
             }
@@ -148,8 +154,9 @@ object MarketCommand {
     }
 
     private fun addMarket(context: CommandContext<ServerCommandSource>, amount: Int): Int {
-        if (marketHandler.getEntries().count { it.uuid == context.source.player.uuid } >= maxEntriesPerUser) {
-            context.source.sendError(LiteralText("You already have the maximum of $maxEntriesPerUser entries"))
+        val maxEntries = context.source.player.getPermission("market.limit.[int]", maxEntriesPerUser)
+        if (marketHandler.getEntries().count { it.uuid == context.source.player.uuid } >= maxEntries) {
+            context.source.sendError(LiteralText("You already have the maximum of $maxEntries entries"))
             return -1
         }
 
@@ -234,7 +241,12 @@ object MarketCommand {
                 storedMarketEntry.item.tag = tag
 
                 this_.button(index % 9, index / 9, storedMarketEntry.item) { it, c ->
-                    buyItem(player, storedMarketEntry)
+                    if (player.getPresentPermission("market.buy", 0)) {
+                        buyItem(player, storedMarketEntry)
+                    } else {
+                        this_.close()
+                        player.sendMessage(LiteralText("No permission to buy items!"), false)
+                    }
                 }
             }
             if (itemsOnDisplay.size < 45) {
