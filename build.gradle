@@ -5,5 +5,5 @@ plugins {
 
 
 dependencies {
-    modImplementation "io.github.gunpowder:gunpowder-currency:1.0.5+gunpowder.1.0.4.2.mc.1.17"
+    modImplementation "io.github.gunpowder:gunpowder-currency:1.0.7+gunpowder.1.0.6.3.mc.1.17.1"
 }

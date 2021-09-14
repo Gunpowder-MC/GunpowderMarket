@@ -61,13 +61,13 @@ object MarketEntryHandler {
                     it[MarketEntryTable.price],
                     it[MarketEntryTable.expiresAt]
                 )
-                val seller = GunpowderMod.instance.server.userCache.getByUuid(entry.uuid)?.name ?: "DummySeller"
+                val seller = GunpowderMod.instance.server.userCache.getByUuid(entry.uuid).orElse(null)?.name ?: "DummySeller"
                 val timeLeft = Duration.between(LocalDateTime.now(), entry.expire)
                 val timeString = "${timeLeft.toDays()}d ${timeLeft.toHours() % 24}h " +
                         "${timeLeft.toMinutes() % 60}m ${timeLeft.seconds % 60}s"
 
                 // Add Lore
-                val tag = entry.item.tag ?: NbtCompound()
+                val tag = entry.item.nbt ?: NbtCompound()
                 val display = tag.get("display") as NbtCompound? ?: NbtCompound()
                 val lore = tag.get("Lore") as NbtList? ?: NbtList()
                 val newLore = NbtList()
@@ -92,7 +92,7 @@ object MarketEntryHandler {
 
                 display.put("Lore", newLore)
                 tag.put("display", display)
-                entry.item.tag = tag
+                entry.item.nbt = tag
                 entry
             }
         }.get()

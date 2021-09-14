@@ -109,7 +109,7 @@ object MarketCommand {
 
             // Remove listing data
             val item = entry.item
-            val tag = item.tag!!
+            val tag = item.nbt!!
             val display = tag.getCompound("display")
             val lore = display.getList("Lore", NbtType.STRING) as NbtList
 
@@ -130,9 +130,9 @@ object MarketCommand {
                 tag.put("display", display)
             }
             if (tag.isEmpty) {
-                item.tag = null
+                item.nbt = null
             } else {
-                item.tag = tag
+                item.nbt = tag
             }
 
             // Give item
@@ -217,7 +217,7 @@ object MarketCommand {
                 val timeString = "${timeLeft.toDays()}d ${timeLeft.toHours() % 24}h " +
                         "${timeLeft.toMinutes() % 60}m ${timeLeft.seconds % 60}s"
 
-                val tag = storedMarketEntry.item.tag!!
+                val tag = storedMarketEntry.item.nbt!!
                 val display = tag.getCompound("display")
                 val lore = display.getList("Lore", NbtType.STRING)
 
@@ -237,8 +237,8 @@ object MarketCommand {
                     newLore.add(lore[i])
                 }
                 display.put("Lore", newLore)
-                storedMarketEntry.item.putSubTag("display", display)
-                storedMarketEntry.item.tag = tag
+                tag.put("display", display)
+                storedMarketEntry.item.nbt = tag
 
                 this_.button(index % 9, index / 9, storedMarketEntry.item) { it, c ->
                     if (player.getPresentPermission("market.buy", 0)) {
@@ -322,7 +322,7 @@ object MarketCommand {
                 val item = entry.item
                 val tkey = item.translationKey
                 val amount = item.count
-                val tag = item.tag!!
+                val tag = item.nbt!!
                 val display = tag.getCompound("display")
                 val lore = display.getList("Lore", NbtType.STRING) as NbtList
 
@@ -343,9 +343,9 @@ object MarketCommand {
                     tag.put("display", display)
                 }
                 if (tag.isEmpty) {
-                    item.tag = null
+                    item.nbt = null
                 } else {
-                    item.tag = tag
+                    item.nbt = tag
                 }
 
                 // Give item
