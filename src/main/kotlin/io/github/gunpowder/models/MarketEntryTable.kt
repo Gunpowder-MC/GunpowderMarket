@@ -27,7 +27,7 @@ package io.github.gunpowder.models
 import io.github.gunpowder.api.exposed.PlayerTable
 import io.github.gunpowder.api.exposed.itemStack
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.`java-time`.datetime
+import org.jetbrains.exposed.sql.javatime.datetime
 
 object MarketEntryTable : Table() {
     val user = uuid("user") references PlayerTable.id

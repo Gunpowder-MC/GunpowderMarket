@@ -1,5 +1,11 @@
 # Gunpowder Market 1.0.6
 
+- Update to 1.18.1
+
+---
+
+# Gunpowder Market 1.0.6
+
 - Update to 1.17.1
 
 ---

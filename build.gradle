@@ -1,9 +1,17 @@
 // Plugins
 plugins {
-    id 'io.github.gunpowder' version '0.3.0'
+    id 'io.github.gunpowder' version '0.3.6'
 }
 
 
 dependencies {
-    modImplementation "io.github.gunpowder:gunpowder-currency:1.0.7+gunpowder.1.0.6.3.mc.1.17.1"
+    modImplementation("io.github.gunpowder:gunpowder-currency:1.0.8+gunpowder.1.1.1.1.mc.1.18.1") {
+        exclude group: "com.google.guava"
+    }
+
+    modRuntimeOnly("io.github.gunpowder:gunpowder-currency:1.0.8+gunpowder.1.1.1.1.mc.1.18.1") {
+        exclude group: "com.google.guava"
+        exclude group: "io.github.gunpowder", module: "gunpowder-api"
+        exclude group: "io.github.gunpowder", module: "gunpowder-base"
+    }
 }
